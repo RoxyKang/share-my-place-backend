@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
 
 const placesRoutes = require("./routes/places-routes");
 const usersRoutes = require("./routes/users-routes");
@@ -7,7 +8,7 @@ const HttpError = require("./models/http-error");
 
 const app = express();
 
-// first setup the bodyParser middleware before reaching other routes
+// first set up the bodyParser middleware before reaching other routes
 // call next() automatically and add the json data
 app.use(bodyParser.json());
 
@@ -33,4 +34,14 @@ app.use((error, req, res, next) => {
   res.json({ message: error.message || "An unknown error occurred!" });
 });
 
-app.listen(4000);
+const url =
+  "mongodb+srv://jzkang:Kangjz990118_@cluster0.ajsuv.mongodb.net/places?retryWrites=true&w=majority";
+
+mongoose
+  .connect(url)
+  .then(() => {
+    app.listen(4000);
+  })
+  .catch((err) => {
+    console.log(err);
+  });

@@ -1,62 +1,70 @@
 const { v4: uuid } = require("uuid");
 const { validationResult } = require("express-validator");
-
+const User = require("../models/user");
 const HttpError = require("../models/http-error");
 
-let DUMMY_USRES = [
-  {
-    id: "u1",
-    name: "user name1",
-    email: "u1@gmail.com",
-    password: "u1u1u1",
-  },
-  {
-    id: "u2",
-    title: "user name2",
-    email: "u2@gmail.com",
-    password: "u2u2u2",
-  },
-];
+const getAllUsers = async (req, res, next) => {
+  let users;
+  try {
+    users = await User.find({}, "-password"); // gets all properties except for password
+  } catch (error) {
+    return next(new HttpError("Fetching users failed.", 500));
+  }
 
-const getAllUsers = (req, res, next) => {
-  res.json({ users: DUMMY_USRES });
+  res.json({ users: users.map((u) => u.toObject({ getters: true })) });
 };
 
-const signUp = (req, res, next) => {
+const signUp = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    throw new HttpError("Invalid inputs.", 422);
+    return next(new HttpError("Invalid inputs.", 422));
   }
 
   const { name, email, password } = req.body;
 
-  const hasUser = DUMMY_USRES.find((u) => u.email === email);
+  let existingUser;
 
-  if (hasUser) {
-    throw new HttpError("User already existed, cannot signup.", 422);
+  try {
+    existingUser = await User.findOne({ email: email });
+  } catch (error) {
+    return next(new HttpError("db has an error when searching emails", 500));
   }
 
-  const newUser = {
-    id: uuid(),
+  if (existingUser) {
+    return next(new HttpError("user already existed", 422));
+  }
+
+  const newUser = new User({
     name,
     email,
     password,
-  };
-
-  DUMMY_USRES.push(newUser);
-
-  res.status(201).json("Successfully signed up user for " + email + " .");
-};
-
-const login = (req, res, next) => {
-  const { email, password } = req.body;
-
-  const user = DUMMY_USRES.find((u) => {
-    return u.email === email && u.password === password;
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Empire_State_Building_%28aerial_view%29.jpg/400px-Empire_State_Building_%28aerial_view%29.jpg",
+    places: [],
   });
 
-  if (!user) {
-    throw new HttpError("The provided email and password don't match.", 401);
+  try {
+    await newUser.save();
+  } catch (error) {
+    return next(new HttpError("db cannot sign up the user: " + error, 500));
+  }
+
+  res.status(201).json({ user: newUser.toObject({ getters: true }) });
+};
+
+const login = async (req, res, next) => {
+  const { email, password } = req.body;
+
+  let existingUser;
+
+  try {
+    existingUser = await User.findOne({ email: email });
+  } catch (error) {
+    return next(new HttpError("db has an error when searching emails", 500));
+  }
+
+  if (!existingUser || existingUser.password !== password) {
+    return next(new HttpError("invalid credentials for login.", 401));
   }
 
   res.status(200).json("Successfullly logged in for " + email + " .");
