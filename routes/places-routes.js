@@ -1,6 +1,7 @@
 const express = require("express");
 const { check } = require("express-validator");
 const placesControllers = require("../controllers/places-controllers");
+const fileUpload = require("../middleware/file-upload");
 const router = express.Router();
 
 // The order of setting up the router matters!
@@ -16,6 +17,7 @@ router.get("/user/:uid", placesControllers.getPlacesByUserId);
 // here we call the check function immediately to check the request body property "title" is empty or not
 router.post(
   "/",
+  fileUpload.single("image"),
   [
     check("title").not().isEmpty(),
     check("description").isLength({ min: 5 }),

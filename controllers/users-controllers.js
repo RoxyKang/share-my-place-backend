@@ -38,8 +38,7 @@ const signUp = async (req, res, next) => {
     name,
     email,
     password,
-    image:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Empire_State_Building_%28aerial_view%29.jpg/400px-Empire_State_Building_%28aerial_view%29.jpg",
+    image: req.file.path,
     places: [],
   });
 
