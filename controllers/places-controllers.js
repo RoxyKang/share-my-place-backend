@@ -4,7 +4,7 @@ const HttpError = require("../models/http-error");
 const getCoordsForAddress = require("../util/location");
 const Place = require("../models/place");
 const User = require("../models/user");
-const { default: mongoose } = require("mongoose");
+const mongoose = require("mongoose");
 
 const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
@@ -20,9 +20,7 @@ const getPlaceById = async (req, res, next) => {
 
   if (!place) {
     // will trigger the error-handling middleware
-    return next(
-      new HttpError("Could not find a place for the provided place id.", 404)
-    );
+    return next(new HttpError("Could not find a place for the provided place id.", 404));
   }
 
   // when the name of the property is equal to the name of the variable
@@ -42,9 +40,7 @@ const getPlacesByUserId = async (req, res, next) => {
   }
 
   if (!places || places.length === 0) {
-    return next(
-      new HttpError("Could not find a place for the provided user id.", 404)
-    ); // will trigger the error-handling middleware
+    return next(new HttpError("Could not find a place for the provided user id.", 404)); // will trigger the error-handling middleware
   }
 
   res.json({ places: places.map((p) => p.toObject({ getters: true })) });
@@ -104,7 +100,7 @@ const createPlace = async (req, res, next) => {
     // if any operations above has errors, the changes will automatically be undone by mongodb
     await session.commitTransaction();
   } catch (error) {
-    return next(new HttpError("failed to save."), 500);
+    return next(new HttpError(error), 500);
   }
 
   res.status(201).json({ place: createdPlace });

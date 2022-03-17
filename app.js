@@ -12,6 +12,18 @@ const app = express();
 // call next() automatically and add the json data
 app.use(bodyParser.json());
 
+// to make it work for browser cors policy
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE");
+
+  next();
+});
+
 // needs to start with /api/places/...
 app.use("/api/places", placesRoutes);
 
@@ -35,7 +47,7 @@ app.use((error, req, res, next) => {
 });
 
 const url =
-  "mongodb+srv://jzkang:Kangjz990118_@cluster0.ajsuv.mongodb.net/places?retryWrites=true&w=majority";
+  "mongodb+srv://jzkang:Kangjz990118_@cluster0.ajsuv.mongodb.net/mern?retryWrites=true&w=majority";
 
 mongoose
   .connect(url)
