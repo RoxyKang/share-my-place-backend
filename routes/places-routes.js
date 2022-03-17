@@ -3,6 +3,7 @@ const { check } = require("express-validator");
 const placesControllers = require("../controllers/places-controllers");
 const fileUpload = require("../middleware/file-upload");
 const router = express.Router();
+const checkAuth = require("../middleware/check-auth");
 
 // The order of setting up the router matters!
 // here it'll first search if the url matches the first path, if not, then move on to the next
@@ -11,6 +12,9 @@ const router = express.Router();
 router.get("/:pid", placesControllers.getPlaceById);
 
 router.get("/user/:uid", placesControllers.getPlacesByUserId);
+
+// add route authentication, above paths are fine
+router.use(checkAuth);
 
 // a path can have multiple middleware registered
 // and they will be executed from left to right

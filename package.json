@@ -19,9 +19,11 @@
   "homepage": "https://github.com/RoxyKang/share-my-place-backend#readme",
   "dependencies": {
     "axios": "^0.26.1",
+    "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.2",
     "express": "^4.17.3",
     "express-validator": "^6.14.0",
+    "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.13.13",
     "mongoose-unique-validator": "^2.0.3",
     "multer": "^1.4.4",

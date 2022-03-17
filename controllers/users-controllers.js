@@ -1,5 +1,7 @@
 const { v4: uuid } = require("uuid");
 const { validationResult } = require("express-validator");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const HttpError = require("../models/http-error");
 
@@ -34,10 +36,17 @@ const signUp = async (req, res, next) => {
     return next(new HttpError("user already existed", 422));
   }
 
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12); // "12": level of hashing
+  } catch (error) {
+    return next(new HttpError("Could not hash password."));
+  }
+
   const newUser = new User({
     name,
     email,
-    password,
+    password: hashedPassword,
     image: req.file.path,
     places: [],
   });
@@ -48,7 +57,16 @@ const signUp = async (req, res, next) => {
     return next(new HttpError("db cannot sign up the user: " + error, 500));
   }
 
-  res.status(201).json({ user: newUser.toObject({ getters: true }) });
+  let token;
+  try {
+    token = jwt.sign({ userId: newUser.id, email: newUser.email }, "secretKey", {
+      expiresIn: "1h",
+    });
+  } catch (error) {
+    return next(error);
+  }
+
+  res.status(201).json({ userId: newUser.id, email: newUser.email, token: token });
 };
 
 const login = async (req, res, next) => {
@@ -62,11 +80,38 @@ const login = async (req, res, next) => {
     return next(new HttpError("db has an error when searching emails", 500));
   }
 
-  if (!existingUser || existingUser.password !== password) {
+  if (!existingUser) {
+    return next(new HttpError("User not exist.", 404));
+  }
+
+  let isValidPassword = false;
+  try {
+    isValidPassword = await bcrypt.compare(password, existingUser.password);
+  } catch (error) {
+    return next(new HttpError("Could not login you in. Invalid credentials.", 500));
+  }
+
+  if (!isValidPassword) {
     return next(new HttpError("invalid credentials for login.", 401));
   }
 
-  res.status(200).json({ user: existingUser.toObject({ getters: true }) });
+  let token;
+  try {
+    // key same as signup
+    token = jwt.sign(
+      { userId: existingUser.id, email: existingUser.email },
+      "secretKey",
+      {
+        expiresIn: "1h",
+      }
+    );
+  } catch (error) {
+    return next(error);
+  }
+
+  res
+    .status(200)
+    .json({ userId: existingUser.id, email: existingUser.email, token: token });
 };
 
 exports.getAllUsers = getAllUsers;

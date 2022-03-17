@@ -123,6 +123,10 @@ const updatePlaceById = async (req, res, next) => {
     return next(new HttpError("failed to retrieve."), 500);
   }
 
+  if (place.creator.toString() !== req.userData.userId) {
+    return next(new HttpError("Permission denied to edit this place.", 401));
+  }
+
   // good approach: update on a copy, and then set the entire object back to the array
   place.title = title;
   place.description = description;
@@ -151,6 +155,11 @@ const deletePlace = async (req, res, next) => {
 
   if (!place) {
     return next(new HttpError("place not existed."), 404);
+  }
+
+  // we can use "id" property because we populated "creator"
+  if (place.creator.id !== req.userData.userId) {
+    return next(new HttpError("Permission denied to delete this place.", 401));
   }
 
   const imagePath = place.image;
